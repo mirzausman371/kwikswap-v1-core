@@ -375,6 +375,8 @@ contract KwikswapV1Router01 is IKwikswapV1Router01 {
     }
 
     constructor(address _factory, address _WETH) public {
+        require(_factory != address(0), 'Address is Zero');
+        require(_WETH != address(0), 'Address is Zero');
         factory = _factory;
         WETH = _WETH;
     }
