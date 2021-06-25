@@ -65,6 +65,8 @@ contract KwikswapV1Pair is IKwikswapV1Pair, KwikswapV1ERC20 {
     // called once by the factory at time of deployment
     function initialize(address _token0, address _token1) external {
         require(msg.sender == factory, 'KwikswapV1: FORBIDDEN'); // sufficient check
+        require(_token0 != address(0), 'Address is Zero');
+        require(_token1 != address(0), 'Address is Zero');
         token0 = _token0;
         token1 = _token1;
     }
