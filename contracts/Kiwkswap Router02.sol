@@ -409,9 +409,10 @@ contract KwikswapV1Router02 is IKwikswapV1Router02 {
         uint amountAMin,
         uint amountBMin
     ) internal virtual returns (uint amountA, uint amountB) {
+        address pair;
         // create the pair if it doesn't exist yet
         if (IKwikswapV1Factory(factory).getPair(tokenA, tokenB) == address(0)) {
-            IKwikswapV1Factory(factory).createPair(tokenA, tokenB);
+            pair = IKwikswapV1Factory(factory).createPair(tokenA, tokenB);
         }
         (uint reserveA, uint reserveB) = KwikswapV1Library.getReserves(factory, tokenA, tokenB);
         if (reserveA == 0 && reserveB == 0) {
