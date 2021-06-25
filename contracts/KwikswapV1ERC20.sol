@@ -79,7 +79,7 @@ contract KwikswapV1ERC20 is IKwikswapV1ERC20 {
     }
 
     function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
-        require(deadline >= block.timestamp, 'KwikswapV1: EXPIRED');
+        require(deadline >= block.number, 'KwikswapV1: EXPIRED');
         bytes32 digest = keccak256(
             abi.encodePacked(
                 '\x19\x01',
