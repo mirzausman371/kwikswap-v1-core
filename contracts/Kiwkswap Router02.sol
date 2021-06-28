@@ -24,19 +24,7 @@ pragma solidity =0.6.6;
 
 // a library for performing overflow-safe math, courtesy of DappHub (https://github.com/dapphub/ds-math)
 
-library SafeMath {
-    function add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x, 'ds-math-add-overflow');
-    }
-
-    function sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x, 'ds-math-sub-underflow');
-    }
-
-    function mul(uint x, uint y) internal pure returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x, 'ds-math-mul-overflow');
-    }
-}
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v3.4.0/contracts/token/ERC20/SafeERC20.sol";
 
 // helper methods for interacting with ERC20 tokens and sending ETH that do not consistently return true/false
 library TransferHelper {
@@ -83,7 +71,7 @@ library KwikswapV1Library {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'3d8098a82e595aa4e6ff03406c8c699a65b79c93d9ca0e50936a0acc32583060' // init code hash
+                hex'bc919ae6f6f95dca1e223fc957286afa1da81529418e9f187db8a0b2d2e963bc' // init code hash
             ))));
     }
 
@@ -141,24 +129,6 @@ library KwikswapV1Library {
             amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);
         }
     }
-}
-
-//  IERC20 Contract Interface
-
-interface IERC20 {
-    event Approval(address indexed owner, address indexed spender, uint value);
-    event Transfer(address indexed from, address indexed to, uint value);
-
-    function name() external view returns (string memory);
-    function symbol() external view returns (string memory);
-    function decimals() external view returns (uint8);
-    function totalSupply() external view returns (uint);
-    function balanceOf(address owner) external view returns (uint);
-    function allowance(address owner, address spender) external view returns (uint);
-
-    function approve(address spender, uint value) external returns (bool);
-    function transfer(address to, uint value) external returns (bool);
-    function transferFrom(address from, address to, uint value) external returns (bool);
 }
 
 // WETH Interface 
@@ -382,6 +352,7 @@ interface IKwikswapV1Router02 is IKwikswapV1Router01 {
 
 contract KwikswapV1Router02 is IKwikswapV1Router02 {
     using SafeMath for uint;
+    using SafeERC20 for IERC20;
 
     address public immutable override factory;
     address public immutable override WETH;
@@ -392,6 +363,8 @@ contract KwikswapV1Router02 is IKwikswapV1Router02 {
     }
 
     constructor(address _factory, address _WETH) public {
+        require(_factory != address(0x0),"ZERO_ADDRESS");
+        require(_WETH != address(0x0),"ZERO_ADDRESS");
         factory = _factory;
         WETH = _WETH;
     }
@@ -409,10 +382,9 @@ contract KwikswapV1Router02 is IKwikswapV1Router02 {
         uint amountAMin,
         uint amountBMin
     ) internal virtual returns (uint amountA, uint amountB) {
-        address pair;
         // create the pair if it doesn't exist yet
         if (IKwikswapV1Factory(factory).getPair(tokenA, tokenB) == address(0)) {
-            pair = IKwikswapV1Factory(factory).createPair(tokenA, tokenB);
+            IKwikswapV1Factory(factory).createPair(tokenA, tokenB);
         }
         (uint reserveA, uint reserveB) = KwikswapV1Library.getReserves(factory, tokenA, tokenB);
         if (reserveA == 0 && reserveB == 0) {
@@ -482,7 +454,7 @@ contract KwikswapV1Router02 is IKwikswapV1Router02 {
         uint deadline
     ) public virtual override ensure(deadline) returns (uint amountA, uint amountB) {
         address pair = KwikswapV1Library.pairFor(factory, tokenA, tokenB);
-        IKwikswapV1Pair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
+        IERC20(pair).safeTransferFrom(msg.sender, pair, liquidity); // send liquidity to pair
         (uint amount0, uint amount1) = IKwikswapV1Pair(pair).burn(to);
         (address token0,) = KwikswapV1Library.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
